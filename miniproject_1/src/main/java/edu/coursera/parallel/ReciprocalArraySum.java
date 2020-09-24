@@ -2,6 +2,9 @@ package edu.coursera.parallel;
 
 import java.util.concurrent.RecursiveAction;
 
+import java.util.concurrent.ForkJoinPool;
+
+
 /**
  * Class wrapping methods for implementing reciprocal array sum in parallel.
  */
@@ -84,6 +87,8 @@ public final class ReciprocalArraySum {
      * created to perform reciprocal array sum in parallel.
      */
     private static class ReciprocalArraySumTask extends RecursiveAction {
+    	
+    	static int SEQUENTIAL_THRESHOLD = 2000;
         /**
          * Starting index for traversal done by this task.
          */
@@ -126,6 +131,21 @@ public final class ReciprocalArraySum {
         @Override
         protected void compute() {
             // TODO
+        	if(input.length <= SEQUENTIAL_THRESHOLD) {
+        		for (int i = this.startIndexInclusive; i < this.endIndexExclusive; i++) {
+                    this.value += 1 / input[i];
+                }
+        	}else {
+        		ReciprocalArraySumTask lHalf = new ReciprocalArraySumTask(this.startIndexInclusive, (this.endIndexExclusive + this.startIndexInclusive)/2, input);
+        		ReciprocalArraySumTask rHalf = new ReciprocalArraySumTask((this.endIndexExclusive + this.startIndexInclusive)/2, this.endIndexExclusive, input);
+        		
+        		lHalf.fork();
+        		rHalf.compute();
+        		lHalf.join();
+        		
+        		this.value = lHalf.getValue() + rHalf.getValue();
+        		
+        	}
         }
     }
 
@@ -140,15 +160,11 @@ public final class ReciprocalArraySum {
      */
     protected static double parArraySum(final double[] input) {
         assert input.length % 2 == 0;
-
-        double sum = 0;
-
-        // Compute sum of reciprocals of array elements
-        for (int i = 0; i < input.length; i++) {
-            sum += 1 / input[i];
-        }
-
-        return sum;
+        
+        ReciprocalArraySumTask halfPartitionTask = new ReciprocalArraySumTask(0, input.length, input);
+        ForkJoinPool.commonPool().invoke(halfPartitionTask);
+        
+        return halfPartitionTask.getValue();
     }
 
     /**
