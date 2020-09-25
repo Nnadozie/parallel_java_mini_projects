@@ -2,11 +2,6 @@ package edu.coursera.parallel;
 
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.RecursiveAction;
-import java.util.List;
-import java.util.concurrent.ForkJoinPool;
-import java.util.concurrent.ForkJoinTask;
-import java.util.ArrayList;
-import java.util.Iterator;
 
 /**
  * Class wrapping methods for implementing reciprocal array sum in parallel.
@@ -91,6 +86,10 @@ public final class ReciprocalArraySum {
      */
     private static class ReciprocalArraySumTask extends RecursiveAction {
     	/**
+		 * 
+		 */
+		private static final long serialVersionUID = 1L;
+		/**
     	 * Threshold for solving sequentially
     	 */
     	static int SEQUENTIAL_THRESHOLD = 20_000;
@@ -109,11 +108,7 @@ public final class ReciprocalArraySum {
         /**
          * Intermediate value produced by this task.
          */
-        private double value;
-        
-        
-        private final int numTasks;
-        
+        private double value;        
 
         /**
          * Constructor.
@@ -123,11 +118,10 @@ public final class ReciprocalArraySum {
          * @param setInput Input values
          */        
         ReciprocalArraySumTask(final int setStartIndexInclusive,
-                final int setEndIndexExclusive, final double[] setInput, final int numTasks) {
+                final int setEndIndexExclusive, final double[] setInput) {
             this.startIndexInclusive = setStartIndexInclusive;
             this.endIndexExclusive = setEndIndexExclusive;
             this.input = setInput;
-            this.numTasks = numTasks;
         }
 
         /**
