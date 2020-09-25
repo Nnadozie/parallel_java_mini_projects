@@ -90,7 +90,7 @@ public final class ReciprocalArraySum {
      */
     private static class ReciprocalArraySumTask extends RecursiveAction {
     	
-    	static int SEQUENTIAL_THRESHOLD = 500;
+    	static int SEQUENTIAL_THRESHOLD = 40_000;
         /**
          * Starting index for traversal done by this task.
          */
@@ -145,12 +145,24 @@ public final class ReciprocalArraySum {
                 }
         	}
         	else {
-        		List<ReciprocalArraySumTask> tasks = (List<ReciprocalArraySumTask>) ForkJoinTask.invokeAll(createSubTasks(this.startIndexInclusive, this.endIndexExclusive, this.input, this.numTasks));
-        		Iterator it = tasks.iterator();
-        		while(it.hasNext()) {
-        			ReciprocalArraySumTask t = (ReciprocalArraySumTask)it.next();
-        			this.value += t.getValue();
-        		}
+//        		List<ReciprocalArraySumTask> tasks = (List<ReciprocalArraySumTask>) ForkJoinTask.invokeAll(createSubTasks(this.startIndexInclusive, this.endIndexExclusive, this.input, this.numTasks));
+//        		Iterator it = tasks.iterator();
+//        		while(it.hasNext()) {
+//        			ReciprocalArraySumTask t = (ReciprocalArraySumTask)it.next();
+//        			this.value += t.getValue();
+//        		}
+        		
+        		ArrayList<ReciprocalArraySumTask> tasks = (ArrayList<ReciprocalArraySumTask>) createSubTasks(this.startIndexInclusive, this.endIndexExclusive, this.input, this.numTasks);
+        		tasks.get(0).fork();
+        		tasks.get(1).fork();
+        		tasks.get(2).fork();
+        		tasks.get(3).compute();
+        		
+        		tasks.get(0).join();
+        		tasks.get(1).join();
+        		tasks.get(2).join();
+        		
+        		this.value = tasks.get(0).getValue() + tasks.get(1).getValue() + tasks.get(2).getValue() + tasks.get(3).getValue();
         	}
         }
     }
@@ -167,7 +179,8 @@ public final class ReciprocalArraySum {
     protected static double parArraySum(final double[] input) {
         assert input.length % 2 == 0;
         
-        return parManyTaskArraySum(input, 2);
+        //return parManyTaskArraySum(input, 2);
+        return 0;
         
     }
     
@@ -178,7 +191,7 @@ public final class ReciprocalArraySum {
      */
     private static List<ReciprocalArraySumTask> createSubTasks(final int startIndexInclusive, final int endIndexExclusive, final double[] input, final int numTasks) {
     	
-    	List<ReciprocalArraySumTask> tasks = new ArrayList<ReciprocalArraySumTask>();
+    	ArrayList<ReciprocalArraySumTask> tasks = new ArrayList<ReciprocalArraySumTask>();
 
         int low = 0; int high = 0;
         
@@ -208,6 +221,7 @@ public final class ReciprocalArraySum {
 
         ReciprocalArraySumTask parentTask = new ReciprocalArraySumTask(0, input.length, input, numTasks);
         
+//        ForkJoinPool.commonPool().invoke(parentTask); 
         ForkJoinPool pool = new ForkJoinPool(numTasks);
         pool.invoke(parentTask);
         
