@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -46,7 +47,15 @@ public final class StudentAnalytics {
      */
     public double averageAgeOfEnrolledStudentsParallelStream(
             final Student[] studentArray) {
-        throw new UnsupportedOperationException();
+        
+        double res = Stream.of(studentArray)
+        		.parallel()
+        		.filter(s -> s.checkIsCurrent())
+        		.mapToDouble(a -> a.getAge())
+        		.average()
+        		.getAsDouble();
+        
+        return res;
     }
 
     /**
@@ -100,7 +109,18 @@ public final class StudentAnalytics {
      */
     public String mostCommonFirstNameOfInactiveStudentsParallelStream(
             final Student[] studentArray) {
-        throw new UnsupportedOperationException();
+        
+        String ret = Stream.of(studentArray)
+        		.parallel()
+        		.filter(s -> !s.checkIsCurrent())
+        		.collect(
+        				Collectors.collectingAndThen(
+                				Collectors.groupingBy(Student::getFirstName, Collectors.counting()),
+        			              map -> map.entrySet().stream().max(Map.Entry.comparingByValue()).get().getKey()
+        			            )
+        				
+        				);
+        return ret;
     }
 
     /**
@@ -136,6 +156,12 @@ public final class StudentAnalytics {
      */
     public int countNumberOfFailedStudentsOlderThan20ParallelStream(
             final Student[] studentArray) {
-        throw new UnsupportedOperationException();
+        
+        int ret = Stream.of(studentArray)
+        		.parallel()
+        		.filter(s -> !s.checkIsCurrent() && s.getAge() > 20 && s.getGrade() < 65)
+        		.mapToInt(s-> 1)
+        		.sum();
+        return ret;
     }
 }
